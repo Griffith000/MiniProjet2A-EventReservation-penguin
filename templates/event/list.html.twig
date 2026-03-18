@@ -1,0 +1,59 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Événements à venir{% endblock %}
+
+{% block body %}
+    <div class="mb-8 pb-6 border-b-2 border-gray-900">
+        <span class="text-accent font-semibold text-xs uppercase tracking-[0.2em]">Découvrir</span>
+        <h1 class="font-display text-5xl md:text-6xl font-extrabold text-gray-900 mt-2 tracking-tight leading-none">
+            Événements<br>à venir
+        </h1>
+        {% if events|length > 0 %}
+            <p class="text-gray-400 mt-3">{{ events|length }} événement{{ events|length > 1 ? 's' : '' }} disponible{{ events|length > 1 ? 's' : '' }}</p>
+        {% endif %}
+    </div>
+
+    {% if events|length > 0 %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for event in events %}
+                <article class="group bg-warm-card border border-gray-200 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[6px_8px_0_rgba(0,0,0,0.15)] hover:border-gray-900">
+                    <img
+                        src="{{ event.image ?? '/images/event-placeholder.jpg' }}"
+                        alt="{{ event.title }}"
+                        class="w-full h-52 object-cover grayscale-[15%] group-hover:grayscale-0 transition-all duration-300"
+                        loading="lazy"
+                    >
+                    <div class="p-6">
+                        <span class="inline-block bg-accent text-white text-[0.65rem] font-bold uppercase tracking-[0.12em] px-3 py-1 mb-3">
+                            {{ event.date|date('d M Y · H:i') }}
+                        </span>
+                        <h2 class="font-display text-xl font-bold text-gray-900 mb-3 leading-tight">
+                            {{ event.title }}
+                        </h2>
+                        <div class="flex flex-wrap gap-4 text-gray-500 text-sm mb-5">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {{ event.location }}
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+                                {{ event.seats }} places
+                            </span>
+                        </div>
+                        <a href="{{ path('app_event_detail', {id: event.id}) }}"
+                           class="inline-flex items-center gap-2 text-gray-900 font-semibold text-sm uppercase tracking-[0.08em] no-underline border-b-2 border-accent hover:text-accent hover:gap-3 transition-all">
+                            Voir les détails
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-16 border-2 border-dashed border-gray-300">
+            <div class="text-5xl mb-4 opacity-40">📭</div>
+            <h3 class="font-display text-2xl font-bold text-gray-900 mb-2">Aucun événement disponible</h3>
+            <p class="text-gray-400">Revenez bientôt pour découvrir nos prochains événements.</p>
+        </div>
+    {% endif %}
+{% endblock %}
