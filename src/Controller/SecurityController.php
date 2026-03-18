@@ -22,6 +22,16 @@ class SecurityController extends AbstractController
         ]);
     }
 
+    #[Route('/register', name: 'app_register', methods: ['GET'])]
+    public function register(): Response
+    {
+        if ($this->getUser()) {
+            return $this->redirectToRoute('app_event_list');
+        }
+
+        return $this->render('security/register.html.twig');
+    }
+
     #[Route('/logout', name: 'app_logout', methods: ['GET'])]
     public function logout(): void
     {
