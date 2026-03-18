@@ -1,0 +1,57 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Réservation confirmée{% endblock %}
+
+{% block body %}
+    <div class="max-w-lg mx-auto mt-8 text-center">
+        <div class="mb-6">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 border-2 border-green-600 mb-5">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+            <span class="block text-accent font-semibold text-xs uppercase tracking-[0.2em] mb-2">Succès</span>
+            <h1 class="font-display text-4xl font-extrabold text-gray-900 tracking-tight">Réservation confirmée !</h1>
+        </div>
+
+        <div class="bg-warm-card border-2 border-gray-900 p-8 text-left mb-8">
+            <h2 class="font-display text-lg font-bold text-gray-900 mb-5 pb-4 border-b border-gray-200">
+                Récapitulatif
+            </h2>
+
+            <div class="space-y-4">
+                <div class="flex justify-between items-start">
+                    <span class="text-gray-400 text-xs font-semibold uppercase tracking-[0.12em]">Événement</span>
+                    <span class="font-semibold text-gray-900 text-right max-w-[60%]">{{ reservation.event.title }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs font-semibold uppercase tracking-[0.12em]">Date</span>
+                    <span class="font-medium text-gray-900">{{ reservation.event.date|date('d/m/Y à H:i') }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs font-semibold uppercase tracking-[0.12em]">Lieu</span>
+                    <span class="font-medium text-gray-900">{{ reservation.event.location }}</span>
+                </div>
+                <div class="h-px bg-gray-200"></div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs font-semibold uppercase tracking-[0.12em]">Nom</span>
+                    <span class="font-medium text-gray-900">{{ reservation.name }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs font-semibold uppercase tracking-[0.12em]">E-mail</span>
+                    <span class="font-medium text-gray-900">{{ reservation.email }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400 text-xs font-semibold uppercase tracking-[0.12em]">Téléphone</span>
+                    <span class="font-medium text-gray-900">{{ reservation.phone }}</span>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ path('app_event_list') }}"
+           class="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-3.5 font-bold text-sm uppercase tracking-[0.1em] no-underline hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Retour aux événements
+        </a>
+    </div>
+{% endblock %}
