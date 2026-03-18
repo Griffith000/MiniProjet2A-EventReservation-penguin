@@ -4,16 +4,16 @@ namespace App\Service;
 
 use App\Entity\User;
 use App\Entity\WebauthnCredential;
-use App\Repository\UserRepository;
 use App\Repository\WebauthnCredentialRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class PasskeyAuthService
 {
     public function __construct(
-        private readonly UserRepository $userRepo,
-        private readonly WebauthnCredentialRepository $credentialRepo,
+        private readonly SessionInterface $session,
+        private readonly WebauthnCredentialRepository $credRepo,
         private readonly EntityManagerInterface $em,
         #[Autowire(env: 'APP_DOMAIN')]
         private readonly string $domain,
@@ -21,18 +21,19 @@ class PasskeyAuthService
         private readonly string $rpName,
     ) {}
 
+    /**
+     * Génère les options pour l'enregistrement d'une passkey
+     */
     public function getRegistrationOptions(User $user): array
     {
-        $challenge = base64_encode(random_bytes(32));
-
-        return [
+        $options = [
             'rp' => ['name' => $this->rpName, 'id' => $this->domain],
             'user' => [
-                'id' => base64_encode((string) $user->getId()),
-                'name' => $user->getUsername(),
-                'displayName' => $user->getUsername(),
+                'id' => base64_encode($user->getEmail()),
+                'name' => $user->getEmail(),
+                'displayName' => $user->getEmail(),
             ],
-            'challenge' => $challenge,
+            'challenge' => base64_encode(random_bytes(32)),
             'pubKeyCredParams' => [
                 ['type' => 'public-key', 'alg' => -7],
                 ['type' => 'public-key', 'alg' => -257],
@@ -40,56 +41,103 @@ class PasskeyAuthService
             'timeout' => 60000,
             'attestation' => 'none',
             'authenticatorSelection' => [
-                'authenticatorAttachment' => 'platform',
-                'requireResidentKey' => true,
-                'residentKey' => 'required',
-                'userVerification' => 'required',
+                'userVerification' => 'preferred',
+                'residentKey' => 'preferred',
             ],
+            'excludeCredentials' => $this->getExcludedCredentials($user),
         ];
+
+        $this->session->set('webauthn_registration', $options);
+
+        return $options;
     }
 
-    public function verifyRegistration(User $user, array $credential, string $name): WebauthnCredential
+    /**
+     * Valide l'enregistrement et lie la passkey à l'utilisateur
+     */
+    public function verifyRegistration(string $response, User $user): void
     {
-        $entity = new WebauthnCredential();
-        $entity->setUser($user);
-        $entity->setName($name);
-        $entity->setCredentialData(json_encode($credential));
+        $options = $this->session->get('webauthn_registration');
 
-        $this->em->persist($entity);
+        if (!$options) {
+            throw new \RuntimeException('No registration session found. Please restart registration.');
+        }
+
+        $data = json_decode($response, true);
+
+        if (!isset($data['id'])) {
+            throw new \RuntimeException('Invalid credential response: missing id.');
+        }
+
+        $credential = new WebauthnCredential();
+        $credential->setUser($user);
+        $credential->setName($data['id']);
+        $credential->setCredentialData($response);
+
+        $this->em->persist($credential);
         $this->em->flush();
 
-        return $entity;
+        $this->session->remove('webauthn_registration');
     }
 
+    /**
+     * Génère les options pour la connexion par passkey
+     */
     public function getLoginOptions(): array
     {
-        $challenge = base64_encode(random_bytes(32));
-
-        return [
-            'challenge' => $challenge,
+        $options = [
+            'challenge' => base64_encode(random_bytes(32)),
             'timeout' => 60000,
             'rpId' => $this->domain,
-            'userVerification' => 'required',
+            'userVerification' => 'preferred',
         ];
+
+        $this->session->set('webauthn_login', $options);
+
+        return $options;
     }
 
-    public function verifyLogin(array $assertion): ?User
+    /**
+     * Valide la connexion et retourne l'utilisateur authentifié
+     */
+    public function verifyLogin(string $response): User
     {
-        $credentialId = $assertion['id'] ?? null;
+        $options = $this->session->get('webauthn_login');
+
+        if (!$options) {
+            throw new \RuntimeException('No login session found. Please restart login.');
+        }
+
+        $data = json_decode($response, true);
+
+        // Le serveur trouve automatiquement l'utilisateur via le credential ID
+        $credentialId = $data['id'] ?? null;
 
         if (!$credentialId) {
-            return null;
+            throw new \RuntimeException('Invalid assertion response: missing id.');
         }
 
-        $credential = $this->credentialRepo->findByCredentialId($credentialId);
+        $entity = $this->credRepo->findByCredentialId($credentialId);
 
-        if (!$credential) {
-            return null;
+        if (!$entity) {
+            throw new \RuntimeException('Credential not found.');
         }
 
-        $credential->setLastUsedAt(new \DateTimeImmutable());
+        $entity->setLastUsedAt(new \DateTimeImmutable()); // Mise à jour lastUsedAt
         $this->em->flush();
 
-        return $credential->getUser();
+        $this->session->remove('webauthn_login');
+
+        return $entity->getUser();
+    }
+
+    private function getExcludedCredentials(User $user): array
+    {
+        // Retourne la liste des credential IDs déjà enregistrés
+        // pour éviter les doublons
+        return array_map(
+            fn($c) => ['id' => $c->getName(), 'type' => 'public-key'],
+            $this->credRepo->findByUser($user)
+        );
     }
 }

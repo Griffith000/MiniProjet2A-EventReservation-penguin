@@ -6,7 +6,7 @@ security:
         app_users:
             entity:
                 class: App\Entity\User
-                property: username
+                property: email
         app_admins:
             entity:
                 class: App\Entity\Admin

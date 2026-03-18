@@ -21,16 +21,16 @@ function getToken() {
 
 function setTokens(token, refreshToken) {
     localStorage.setItem('jwt_token', token);
-    localStorage.setItem('jwt_refresh_token', refreshToken);
+    localStorage.setItem('refresh_token', refreshToken);
 }
 
 function clearTokens() {
     localStorage.removeItem('jwt_token');
-    localStorage.removeItem('jwt_refresh_token');
+    localStorage.removeItem('refresh_token');
 }
 
 async function refreshToken() {
-    const refreshToken = localStorage.getItem('jwt_refresh_token');
+    const refreshToken = localStorage.getItem('refresh_token');
     if (!refreshToken) throw new Error('No refresh token available.');
 
     const res = await fetch('/api/token/refresh', {
@@ -71,11 +71,11 @@ async function authFetch(url, options = {}) {
     return res;
 }
 
-async function loginWithPassword(username, password) {
+async function loginWithPassword(email, password) {
     const res = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
     });
 
     if (!res.ok) throw new Error('Invalid credentials.');
@@ -85,66 +85,101 @@ async function loginWithPassword(username, password) {
     return data;
 }
 
-async function registerPasskey(username, keyName = 'My Passkey') {
-    const optRes = await fetch(`${API_BASE}/register/options`, {
+async function registerPasskey(email, displayName) {
+    // 1. Obtenir les options du serveur
+    const optionsRes = await fetch(`${API_BASE}/register/options`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ email, displayName }),
     });
 
-    if (!optRes.ok) throw new Error('Could not get registration options.');
+    if (!optionsRes.ok) {
+        const err = await optionsRes.json();
+        throw new Error(err.error || 'Échec options');
+    }
 
-    const options = await optRes.json();
+    const options = await optionsRes.json();
 
-    options.challenge = base64UrlToBuffer(options.challenge);
-    options.user.id = base64UrlToBuffer(options.user.id);
+    // 2. Créer la credential via l'API navigateur
+    const credential = await navigator.credentials.create({
+        publicKey: {
+            ...options,
+            challenge: base64UrlToBuffer(options.challenge),
+            user: {
+                ...options.user,
+                id: base64UrlToBuffer(options.user.id),
+            },
+            excludeCredentials: options.excludeCredentials?.map(c => ({
+                ...c,
+                id: base64UrlToBuffer(c.id),
+            })),
+        },
+    });
 
-    const credential = await navigator.credentials.create({ publicKey: options });
-
+    // 3. Envoyer la réponse au serveur
     const verifyRes = await fetch(`${API_BASE}/register/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            username,
-            name: keyName,
+            email,
             credential: {
                 id: credential.id,
                 rawId: bufferToBase64Url(credential.rawId),
-                type: credential.type,
                 response: {
                     clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
                     attestationObject: bufferToBase64Url(credential.response.attestationObject),
                 },
+                type: credential.type,
+                clientExtensionResults: credential.getClientExtensionResults(),
             },
         }),
     });
 
-    if (!verifyRes.ok) throw new Error('Passkey registration failed.');
+    const result = await verifyRes.json();
+    if (!verifyRes.ok) throw new Error(result.error || 'Échec vérification');
 
-    return verifyRes.json();
+    // 4. Stocker les tokens pour les requêtes futures
+    if (result.token) {
+        localStorage.setItem('jwt_token', result.token);
+        localStorage.setItem('refresh_token', result.refresh_token);
+    }
+
+    return result;
 }
 
 async function loginWithPasskey() {
-    const optRes = await fetch(`${API_BASE}/login/options`, {
+    // 1. Obtenir les options de connexion
+    const optionsRes = await fetch(`${API_BASE}/login/options`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
     });
 
-    if (!optRes.ok) throw new Error('Could not get login options.');
+    if (!optionsRes.ok) {
+        const err = await optionsRes.json();
+        throw new Error(err.error || 'Échec options login');
+    }
 
-    const options = await optRes.json();
-    options.challenge = base64UrlToBuffer(options.challenge);
+    const options = await optionsRes.json();
 
-    const assertion = await navigator.credentials.get({ publicKey: options });
+    // 2. Demander l'authentification à l'utilisateur
+    const assertion = await navigator.credentials.get({
+        publicKey: {
+            ...options,
+            challenge: base64UrlToBuffer(options.challenge),
+            allowCredentials: options.allowCredentials?.map(c => ({
+                ...c,
+                id: base64UrlToBuffer(c.id),
+            })),
+        },
+    });
 
+    // 3. Vérifier avec le serveur
     const verifyRes = await fetch(`${API_BASE}/login/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            assertion: {
+            credential: {
                 id: assertion.id,
                 rawId: bufferToBase64Url(assertion.rawId),
-                type: assertion.type,
                 response: {
                     clientDataJSON: bufferToBase64Url(assertion.response.clientDataJSON),
                     authenticatorData: bufferToBase64Url(assertion.response.authenticatorData),
@@ -153,15 +188,21 @@ async function loginWithPasskey() {
                         ? bufferToBase64Url(assertion.response.userHandle)
                         : null,
                 },
+                type: assertion.type,
+                clientExtensionResults: assertion.getClientExtensionResults(),
             },
         }),
     });
 
-    if (!verifyRes.ok) throw new Error('Passkey login failed.');
+    const result = await verifyRes.json();
+    if (!verifyRes.ok) throw new Error(result.error || 'Échec authentification');
 
-    const data = await verifyRes.json();
-    setTokens(data.token, data.refresh_token);
-    return data;
+    if (result.token) {
+        localStorage.setItem('jwt_token', result.token);
+        localStorage.setItem('refresh_token', result.refresh_token);
+    }
+
+    return result;
 }
 
 export { loginWithPassword, loginWithPasskey, registerPasskey, authFetch, refreshToken, clearTokens, getToken };
