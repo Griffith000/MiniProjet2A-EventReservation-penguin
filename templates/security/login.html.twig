@@ -39,6 +39,7 @@
             </div>
 
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+            <input type="hidden" name="_target_path" id="target-path" value="">
 
             <button type="submit"
                     class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all">
@@ -68,6 +69,9 @@
     <script type="module">
         import { loginWithPasskey } from '/js/auth.js';
 
+        const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/events';
+        document.getElementById('target-path').value = redirectUrl;
+
         document.getElementById('passkey-login-btn').addEventListener('click', async () => {
             const msg = document.getElementById('passkey-msg');
             msg.className = 'mt-3 text-sm text-center font-medium';
@@ -77,7 +81,7 @@
                 await loginWithPasskey();
                 msg.textContent = 'Connecté ! Redirection…';
                 msg.classList.add('text-green-700');
-                window.location.href = '/events';
+                window.location.href = redirectUrl;
             } catch (e) {
                 msg.textContent = e.message;
                 msg.classList.add('text-red-700');

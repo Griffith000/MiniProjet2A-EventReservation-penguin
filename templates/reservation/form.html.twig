@@ -28,6 +28,7 @@
         </div>
 
         <form method="post" action="{{ path('app_reservation_submit', {id: event.id}) }}"
+              data-turbo="false"
               class="bg-warm-card border-2 border-gray-900 p-8">
             <div class="mb-5">
                 <label for="name" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
@@ -60,6 +61,29 @@
             </div>
 
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('reservation_' ~ event.id) }}">
+
+            <script>
+                (function () {
+                    const token = localStorage.getItem('jwt_token');
+                    if (!token) {
+                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                        return;
+                    }
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        if (payload.exp && payload.exp < Date.now() / 1000) {
+                            localStorage.removeItem('jwt_token');
+                            localStorage.removeItem('refresh_token');
+                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                            return;
+                        }
+                        const email = payload.username || payload.email || payload.sub || '';
+                        if (email) document.getElementById('email').value = email;
+                    } catch (e) {
+                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                    }
+                })();
+            </script>
 
             <button type="submit"
                     class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all">
