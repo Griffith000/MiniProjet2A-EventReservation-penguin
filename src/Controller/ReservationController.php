@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ReservationController extends AbstractController
 {
-    #[Route('/events/{id}/reserve', name: 'app_reservation_form', methods: ['GET'])]
+    #[Route('/events/{id}/reserve', name: 'app_reservation_form', methods: ['GET'], requirements: ['id' => '.+'])]
     public function form(string $id, EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
     {
         $event = $eventRepo->find($id);
