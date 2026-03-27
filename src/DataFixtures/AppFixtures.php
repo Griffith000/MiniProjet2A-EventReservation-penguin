@@ -2,10 +2,10 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Admin;
 use App\Entity\Event;
 use App\Entity\Reservation;
 use App\Entity\User;
+use App\Enum\Role;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -16,15 +16,17 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Admin
-        $admin = new Admin();
+        // Admin user
+        $admin = new User();
         $admin->setEmail('admin@example.com');
+        $admin->setRole(Role::ADMIN);
         $admin->setPasswordHash($this->hasher->hashPassword($admin, 'admin1234'));
         $manager->persist($admin);
 
-        // Users
+        // Regular user
         $user = new User();
         $user->setEmail('johndoe@example.com');
+        $user->setRole(Role::USER);
         $user->setPasswordHash($this->hasher->hashPassword($user, 'user1234'));
         $manager->persist($user);
 
@@ -50,7 +52,7 @@ class AppFixtures extends Fixture
             $createdEvents[] = $event;
         }
 
-        // Sample reservations
+        // Sample reservation
         $reservation = new Reservation();
         $reservation->setEvent($createdEvents[0]);
         $reservation->setName('Jane Smith');

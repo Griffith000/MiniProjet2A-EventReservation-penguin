@@ -1,0 +1,108 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Tableau de bord — Administration{% endblock %}
+
+{% block body %}
+    <div class="mb-8 pb-6 border-b-2 border-gray-900 flex items-end justify-between">
+        <div>
+            <a href="{{ path('app_event_list') }}" class="text-gray-400 hover:text-accent text-xs font-semibold uppercase tracking-[0.12em] no-underline transition-colors">
+                ← Voir les événements
+            </a>
+            <span class="text-accent font-semibold text-xs uppercase tracking-[0.2em] block mt-2">Administration</span>
+            <h1 class="font-display text-5xl font-extrabold text-gray-900 mt-2 tracking-tight leading-none">
+                Tableau de bord
+            </h1>
+        </div>
+    </div>
+
+    {# Stats row #}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
+        <div class="bg-warm-card border-2 border-gray-900 p-5">
+            <span class="block text-gray-400 text-[0.65rem] font-semibold uppercase tracking-[0.12em] mb-1">Événements</span>
+            <span class="font-display text-4xl font-extrabold text-gray-900">{{ events|length }}</span>
+        </div>
+        <div class="bg-warm-card border-2 border-gray-200 p-5">
+            <span class="block text-gray-400 text-[0.65rem] font-semibold uppercase tracking-[0.12em] mb-1">Total réservations</span>
+            <span class="font-display text-4xl font-extrabold text-gray-900">{{ totalReservations }}</span>
+        </div>
+        <div class="col-span-2 md:col-span-1 bg-accent/10 border-2 border-accent/30 p-5">
+            <span class="block text-accent text-[0.65rem] font-semibold uppercase tracking-[0.12em] mb-1">Connecté en tant que</span>
+            <span class="font-display text-xl font-extrabold text-gray-900">{{ app.user.email }}</span>
+        </div>
+    </div>
+
+    {# Events table #}
+    <div class="flex items-center justify-between mb-5">
+        <h2 class="font-display text-2xl font-bold text-gray-900">Gestion des événements</h2>
+        <a href="{{ path('app_admin_event_create') }}"
+           class="flex items-center gap-2 bg-gray-900 text-white px-5 py-2.5 font-bold text-xs uppercase tracking-[0.1em] no-underline hover:bg-accent hover:-translate-y-0.5 hover:shadow-[3px_4px_0_rgba(0,0,0,0.2)] transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nouvel événement
+        </a>
+    </div>
+
+    {% if events|length > 0 %}
+        <div class="border-2 border-gray-900 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-900 text-white">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em]">Titre</th>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em] hidden md:table-cell">Date</th>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em] hidden lg:table-cell">Lieu</th>
+                        <th class="px-5 py-3 text-center text-[0.65rem] font-bold uppercase tracking-[0.12em]">Places</th>
+                        <th class="px-5 py-3 text-center text-[0.65rem] font-bold uppercase tracking-[0.12em]">Réservations</th>
+                        <th class="px-5 py-3 text-right text-[0.65rem] font-bold uppercase tracking-[0.12em]">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for event in events %}
+                        <tr class="bg-warm-card hover:bg-warm transition-colors">
+                            <td class="px-5 py-4 font-semibold text-gray-900">{{ event.title }}</td>
+                            <td class="px-5 py-4 text-gray-500 hidden md:table-cell">{{ event.date|date('d/m/Y') }}</td>
+                            <td class="px-5 py-4 text-gray-500 hidden lg:table-cell">{{ event.location }}</td>
+                            <td class="px-5 py-4 text-center text-gray-700 font-medium">{{ event.seats }}</td>
+                            <td class="px-5 py-4 text-center">
+                                <a href="{{ path('app_admin_reservations', {id: event.id}) }}"
+                                   class="text-accent font-bold hover:underline no-underline">
+                                    {{ event.reservations|length }}
+                                </a>
+                            </td>
+                            <td class="px-5 py-4">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="{{ path('app_admin_event_edit', {id: event.id}) }}"
+                                       class="text-gray-500 hover:text-gray-900 transition-colors" title="Modifier">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                        </svg>
+                                    </a>
+                                    <form method="post" action="{{ path('app_admin_event_delete', {id: event.id}) }}"
+                                          onsubmit="return confirm('Supprimer cet événement ?')">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('delete_event_' ~ event.id) }}">
+                                        <button type="submit" class="text-gray-400 hover:text-red-600 transition-colors" title="Supprimer">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-16 border-2 border-dashed border-gray-300">
+            <div class="text-5xl mb-4 opacity-40">📭</div>
+            <h3 class="font-display text-2xl font-bold text-gray-900 mb-2">Aucun événement</h3>
+            <p class="text-gray-400 mb-6">Créez votre premier événement pour commencer.</p>
+            <a href="{{ path('app_admin_event_create') }}"
+               class="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 font-bold text-sm uppercase tracking-[0.1em] no-underline hover:bg-accent transition-colors">
+                Créer un événement
+            </a>
+        </div>
+    {% endif %}
+{% endblock %}

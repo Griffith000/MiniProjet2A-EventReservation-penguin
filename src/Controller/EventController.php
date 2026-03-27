@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class EventController extends AbstractController
 {
-    #[Route('/events', name: 'app_event_list', methods: ['GET'])]
+    #[Route('/events', name: 'app_event_list', methods: ['GET', 'POST'])]
     public function list(EventRepository $eventRepo): Response
     {
         $events = $eventRepo->findUpcoming();
