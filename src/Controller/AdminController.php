@@ -70,8 +70,8 @@ class AdminController extends AbstractController
         return $this->render('admin/event/create.html.twig');
     }
 
-    #[Route('/events/{id}/edit', name: 'app_admin_event_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
-    public function editEvent(int $id, Request $request, EventRepository $eventRepo, EntityManagerInterface $em): Response
+    #[Route('/events/{id}/edit', name: 'app_admin_event_edit', methods: ['GET', 'POST'])]
+    public function editEvent(string $id, Request $request, EventRepository $eventRepo, EntityManagerInterface $em): Response
     {
         $event = $eventRepo->find($id);
 
@@ -95,8 +95,8 @@ class AdminController extends AbstractController
         return $this->render('admin/event/edit.html.twig', ['event' => $event]);
     }
 
-    #[Route('/events/{id}/delete', name: 'app_admin_event_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function deleteEvent(int $id, Request $request, EventRepository $eventRepo, EntityManagerInterface $em): Response
+    #[Route('/events/{id}/delete', name: 'app_admin_event_delete', methods: ['POST'])]
+    public function deleteEvent(string $id, Request $request, EventRepository $eventRepo, EntityManagerInterface $em): Response
     {
         $event = $eventRepo->find($id);
 
@@ -116,8 +116,8 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('app_admin_dashboard');
     }
 
-    #[Route('/events/{id}/reservations', name: 'app_admin_reservations', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function reservations(int $id, EventRepository $eventRepo): Response
+    #[Route('/events/{id}/reservations', name: 'app_admin_reservations', methods: ['GET'])]
+    public function reservations(string $id, EventRepository $eventRepo): Response
     {
         $event = $eventRepo->find($id);
 
