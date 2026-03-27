@@ -37,6 +37,7 @@
                 <input type="text" id="name" name="name"
                        required
                        placeholder="Votre nom"
+                       value="{{ user.name|default('') }}"
                        class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
             </div>
 
@@ -47,6 +48,7 @@
                 <input type="email" id="email" name="email"
                        required
                        placeholder="votre@email.com"
+                       value="{{ user.email|default('') }}"
                        class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
             </div>
 

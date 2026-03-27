@@ -19,6 +19,10 @@ class Reservation
     #[ORM\JoinColumn(nullable: false)]
     private Event $event;
 
+    #[ORM\ManyToOne(inversedBy: 'reservations')]
+    #[ORM\JoinColumn(nullable: false)]
+    private User $user;
+
     #[ORM\Column(length: 255)]
     private string $name;
 
@@ -50,6 +54,17 @@ class Reservation
     public function setEvent(Event $event): static
     {
         $this->event = $event;
+        return $this;
+    }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    public function setUser(User $user): static
+    {
+        $this->user = $user;
         return $this;
     }
 
