@@ -4,17 +4,18 @@ namespace App\Entity;
 
 use App\Repository\WebauthnCredentialRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
+use Webauthn\PublicKeyCredentialSource;
 
 #[ORM\Entity(repositoryClass: WebauthnCredentialRepository::class)]
 #[ORM\Table(name: 'webauthn_credentials')]
 class WebauthnCredential
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[ORM\Column(type: 'uuid', unique: true)]
+    private Uuid $id;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'webauthnCredentials')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private User $user;
 
@@ -32,13 +33,25 @@ class WebauthnCredential
 
     public function __construct()
     {
+        $this->id = Uuid::v4();
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int { return $this->id; }
+    public function getId(): Uuid { return $this->id; }
 
     public function getUser(): User { return $this->user; }
     public function setUser(User $user): static { $this->user = $user; return $this; }
+
+    public function getCredentialSource(): PublicKeyCredentialSource
+    {
+        $data = json_decode($this->credentialData, true);
+        return PublicKeyCredentialSource::createFromArray($data);
+    }
+
+    public function setCredentialSource(PublicKeyCredentialSource $source): void
+    {
+        $this->credentialData = json_encode($source);
+    }
 
     public function getCredentialData(): string { return $this->credentialData; }
     public function setCredentialData(string $credentialData): static { $this->credentialData = $credentialData; return $this; }
