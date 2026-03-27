@@ -16,16 +16,9 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 class AdminController extends AbstractController
 {
     #[Route('/login', name: 'app_admin_login', methods: ['GET', 'POST'])]
-    public function login(AuthenticationUtils $authenticationUtils): Response
+    public function login(): Response
     {
-        if ($this->getUser()) {
-            return $this->redirectToRoute('app_admin_dashboard');
-        }
-
-        return $this->render('admin/login.html.twig', [
-            'last_username' => $authenticationUtils->getLastUsername(),
-            'error' => $authenticationUtils->getLastAuthenticationError(),
-        ]);
+        return $this->redirectToRoute('app_login');
     }
 
     #[Route('/logout', name: 'app_admin_logout', methods: ['GET'])]
@@ -34,7 +27,7 @@ class AdminController extends AbstractController
         // Handled by Symfony security firewall
     }
 
-    #[Route('', name: 'app_admin_dashboard', methods: ['GET'])]
+    #[Route('', name: 'app_admin_dashboard', methods: ['GET', 'POST'])]
     public function dashboard(EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
     {
         $events = $eventRepo->findAll();
