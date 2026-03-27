@@ -10,10 +10,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ReservationController extends AbstractController
 {
     #[Route('/events/{id}/reserve', name: 'app_reservation_form', methods: ['GET'], requirements: ['id' => '.+'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function form(string $id, EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
     {
         $event = $eventRepo->find($id);
@@ -35,6 +37,7 @@ class ReservationController extends AbstractController
     }
 
     #[Route('/events/{id}/reserve', name: 'app_reservation_submit', methods: ['POST'])]
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function submit(
         string $id,
         Request $request,

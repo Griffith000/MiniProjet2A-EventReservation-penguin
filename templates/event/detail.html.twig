@@ -71,16 +71,23 @@
                 {% endif %}
 
                 <div class="mt-6">
-                    {% if remainingSeats > 0 %}
-                        <a href="{{ path('app_reservation_form', {id: event.id}) }}"
-                           class="block w-full bg-primary text-white text-center py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all">
-                            Réserver une place
-                        </a>
+                    {% if app.user %}
+                        {% if remainingSeats > 0 %}
+                            <a href="{{ path('app_reservation_form', {id: event.id}) }}"
+                               class="block w-full bg-primary text-white text-center py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all">
+                                Réserver une place
+                            </a>
+                        {% else %}
+                            <button disabled
+                                    class="block w-full bg-gray-100 text-gray-400 text-center py-3.5 font-medium text-sm rounded-lg cursor-not-allowed">
+                                Complet
+                            </button>
+                        {% endif %}
                     {% else %}
-                        <button disabled
-                                class="block w-full bg-gray-100 text-gray-400 text-center py-3.5 font-medium text-sm rounded-lg cursor-not-allowed">
-                            Complet
-                        </button>
+                        <a href="{{ path('app_login') }}"
+                           class="block w-full bg-primary text-white text-center py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all">
+                            Connectez-vous pour réserver
+                        </a>
                     {% endif %}
                 </div>
             </div>
