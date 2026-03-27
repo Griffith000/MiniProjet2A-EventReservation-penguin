@@ -22,6 +22,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true)]
     private string $email;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $name = null;
+
     #[ORM\Column(type: 'string', enumType: Role::class)]
     private Role $role = Role::USER;
 
@@ -36,10 +39,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     private Collection $webauthnCredentials;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Reservation::class, orphanRemoval: true)]
+    private Collection $reservations;
+
     public function __construct()
     {
         $this->id = Uuid::v4();
         $this->webauthnCredentials = new ArrayCollection();
+        $this->reservations = new ArrayCollection();
     }
 
     public function getId(): Uuid
@@ -55,6 +62,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(?string $name): static
+    {
+        $this->name = $name;
         return $this;
     }
 
@@ -96,5 +114,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getWebauthnCredentials(): Collection
     {
         return $this->webauthnCredentials;
+    }
+
+    /** @return Collection<int, Reservation> */
+    public function getReservations(): Collection
+    {
+        return $this->reservations;
+    }
+
+    public function addReservation(Reservation $reservation): static
+    {
+        if (!$this->reservations->contains($reservation)) {
+            $this->reservations->add($reservation);
+            $reservation->setUser($this);
+        }
+
+        return $this;
     }
 }

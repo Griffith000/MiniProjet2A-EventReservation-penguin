@@ -5,12 +5,14 @@ namespace App\Controller;
 use App\Entity\Reservation;
 use App\Repository\EventRepository;
 use App\Repository\ReservationRepository;
+use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 class ReservationController extends AbstractController
 {
@@ -31,8 +33,11 @@ class ReservationController extends AbstractController
             return $this->redirectToRoute('app_event_detail', ['id' => $id]);
         }
 
+        $user = $this->getUser();
+
         return $this->render('reservation/form.html.twig', [
             'event' => $event,
+            'user' => $user,
         ]);
     }
 
@@ -43,9 +48,11 @@ class ReservationController extends AbstractController
         Request $request,
         EventRepository $eventRepo,
         ReservationRepository $reservationRepo,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        MailerService $mailer
     ): Response {
         $event = $eventRepo->find($id);
+        $user = $this->getUser();
 
         if (!$event) {
             throw $this->createNotFoundException('Event not found.');
@@ -65,12 +72,19 @@ class ReservationController extends AbstractController
 
         $reservation = new Reservation();
         $reservation->setEvent($event);
+        $reservation->setUser($user);
         $reservation->setName(trim($request->request->getString('name')));
         $reservation->setEmail(trim($request->request->getString('email')));
         $reservation->setPhone(trim($request->request->getString('phone')));
 
         $em->persist($reservation);
         $em->flush();
+
+        try {
+            $mailer->sendReservationConfirmation($reservation);
+        } catch (\Exception $e) {
+            // Log error but don't fail the reservation
+        }
 
         return $this->redirectToRoute('app_reservation_confirmation', ['id' => $reservation->getId()]);
     }
