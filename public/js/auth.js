@@ -130,7 +130,6 @@ async function registerPasskey(email, displayName) {
                     attestationObject: bufferToBase64Url(credential.response.attestationObject),
                 },
                 type: credential.type,
-                clientExtensionResults: credential.getClientExtensionResults(),
             },
         }),
     });
@@ -189,7 +188,6 @@ async function loginWithPasskey() {
                         : null,
                 },
                 type: assertion.type,
-                clientExtensionResults: assertion.getClientExtensionResults(),
             },
         }),
     });

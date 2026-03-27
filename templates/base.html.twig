@@ -50,21 +50,36 @@
                     <a href="{{ path('app_event_list') }}" class="text-gray-300 hover:text-accent text-sm font-semibold uppercase tracking-widest transition-colors no-underline">
                         Événements
                     </a>
-                    {% if app.user %}
-                        <span class="text-accent text-sm font-semibold uppercase tracking-widest">
-                            {{ app.user.email }}
-                        </span>
-                        <a href="{{ path('app_logout') }}" class="text-gray-300 hover:text-accent text-sm font-semibold uppercase tracking-widest transition-colors no-underline">
-                            Déconnexion
-                        </a>
-                    {% else %}
-                        <a href="{{ path('app_login') }}" class="text-gray-300 hover:text-accent text-sm font-semibold uppercase tracking-widest transition-colors no-underline">
-                            Connexion
-                        </a>
-                        <a href="{{ path('app_register') }}" class="bg-accent text-white px-4 py-2 text-sm font-semibold uppercase tracking-widest hover:bg-accent-hover transition-colors no-underline">
-                            S'inscrire
-                        </a>
-                    {% endif %}
+                    <span id="nav-user" class="text-accent text-sm font-semibold uppercase tracking-widest hidden"></span>
+                    <a id="nav-logout" href="{{ path('app_logout') }}" class="text-gray-300 hover:text-accent text-sm font-semibold uppercase tracking-widest transition-colors no-underline hidden" onclick="localStorage.removeItem('jwt_token');localStorage.removeItem('refresh_token');">
+                        Déconnexion
+                    </a>
+                    <a id="nav-login" href="{{ path('app_login') }}" class="text-gray-300 hover:text-accent text-sm font-semibold uppercase tracking-widest transition-colors no-underline">
+                        Connexion
+                    </a>
+                    <a id="nav-register" href="{{ path('app_register') }}" class="bg-accent text-white px-4 py-2 text-sm font-semibold uppercase tracking-widest hover:bg-accent-hover transition-colors no-underline">
+                        S'inscrire
+                    </a>
+                    <script>
+                        (function () {
+                            const token = localStorage.getItem('jwt_token');
+                            if (!token) return;
+                            try {
+                                const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                                if (!payload || (payload.exp && payload.exp < Date.now() / 1000)) {
+                                    localStorage.removeItem('jwt_token');
+                                    localStorage.removeItem('refresh_token');
+                                    return;
+                                }
+                                const email = payload.username || payload.email || payload.sub || '';
+                                document.getElementById('nav-user').textContent = email;
+                                document.getElementById('nav-user').classList.remove('hidden');
+                                document.getElementById('nav-logout').classList.remove('hidden');
+                                document.getElementById('nav-login').classList.add('hidden');
+                                document.getElementById('nav-register').classList.add('hidden');
+                            } catch (e) {}
+                        })();
+                    </script>
                 </div>
             </div>
         </nav>

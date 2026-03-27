@@ -19,5 +19,30 @@ services:
     App\:
         resource: '../src/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # WebAuthn services
+    Webauthn\AttestationStatement\NoneAttestationStatementSupport: ~
+
+    Webauthn\AttestationStatement\AttestationStatementSupportManager:
+        arguments:
+            $attestationStatementSupports:
+                - '@Webauthn\AttestationStatement\NoneAttestationStatementSupport'
+
+    Webauthn\AttestationStatement\AttestationObjectLoader:
+        arguments:
+            $attestationStatementSupportManager: '@Webauthn\AttestationStatement\AttestationStatementSupportManager'
+
+    Webauthn\PublicKeyCredentialLoader:
+        arguments:
+            $attestationObjectLoader: '@Webauthn\AttestationStatement\AttestationObjectLoader'
+            $serializer: null
+
+    Webauthn\AuthenticatorAttestationResponseValidator:
+        arguments:
+            $attestationStatementSupportManager: '@Webauthn\AttestationStatement\AttestationStatementSupportManager'
+
+    Webauthn\AuthenticatorAssertionResponseValidator: ~
+
+    App\Service\PasskeyAuthService:
+        arguments:
+            $domain: '%env(APP_DOMAIN)%'
+            $rpName: '%env(WEBAUTHN_RP_NAME)%'

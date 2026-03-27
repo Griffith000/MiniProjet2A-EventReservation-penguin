@@ -13,8 +13,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class ReservationController extends AbstractController
 {
-    #[Route('/events/{id}/reserve', name: 'app_reservation_form', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function form(int $id, EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
+    #[Route('/events/{id}/reserve', name: 'app_reservation_form', methods: ['GET'])]
+    public function form(string $id, EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
     {
         $event = $eventRepo->find($id);
 
@@ -34,9 +34,9 @@ class ReservationController extends AbstractController
         ]);
     }
 
-    #[Route('/events/{id}/reserve', name: 'app_reservation_submit', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/events/{id}/reserve', name: 'app_reservation_submit', methods: ['POST'])]
     public function submit(
-        int $id,
+        string $id,
         Request $request,
         EventRepository $eventRepo,
         ReservationRepository $reservationRepo,
@@ -68,6 +68,18 @@ class ReservationController extends AbstractController
 
         $em->persist($reservation);
         $em->flush();
+
+        return $this->redirectToRoute('app_reservation_confirmation', ['id' => $reservation->getId()]);
+    }
+
+    #[Route('/reservations/{id}/confirmation', name: 'app_reservation_confirmation', methods: ['GET'])]
+    public function confirmation(string $id, ReservationRepository $reservationRepo): Response
+    {
+        $reservation = $reservationRepo->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Reservation not found.');
+        }
 
         return $this->render('reservation/confirmation.html.twig', [
             'reservation' => $reservation,

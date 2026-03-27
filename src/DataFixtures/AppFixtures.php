@@ -18,13 +18,13 @@ class AppFixtures extends Fixture
     {
         // Admin
         $admin = new Admin();
-        $admin->setUsername('admin');
+        $admin->setEmail('admin@example.com');
         $admin->setPasswordHash($this->hasher->hashPassword($admin, 'admin1234'));
         $manager->persist($admin);
 
         // Users
         $user = new User();
-        $user->setUsername('johndoe');
+        $user->setEmail('johndoe@example.com');
         $user->setPasswordHash($this->hasher->hashPassword($user, 'user1234'));
         $manager->persist($user);
 

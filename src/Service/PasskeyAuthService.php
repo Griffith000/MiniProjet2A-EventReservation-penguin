@@ -3,21 +3,33 @@
 namespace App\Service;
 
 use App\Entity\User;
-use App\Entity\WebauthnCredential;
 use App\Repository\WebauthnCredentialRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Webauthn\AuthenticatorAssertionResponse;
+use Webauthn\AuthenticatorAssertionResponseValidator;
+use Webauthn\AuthenticatorAttestationResponse;
+use Webauthn\AuthenticatorAttestationResponseValidator;
+use Webauthn\AuthenticatorSelectionCriteria;
+use Webauthn\PublicKeyCredentialCreationOptions;
+use Webauthn\PublicKeyCredentialDescriptor;
+use Webauthn\PublicKeyCredentialLoader;
+use Webauthn\PublicKeyCredentialParameters;
+use Webauthn\PublicKeyCredentialRequestOptions;
+use Webauthn\PublicKeyCredentialRpEntity;
+use Webauthn\PublicKeyCredentialSource;
+use Webauthn\PublicKeyCredentialUserEntity;
 
 class PasskeyAuthService
 {
     public function __construct(
-        private readonly SessionInterface $session,
+        private readonly RequestStack $requestStack,
         private readonly WebauthnCredentialRepository $credRepo,
         private readonly EntityManagerInterface $em,
-        #[Autowire(env: 'APP_DOMAIN')]
+        private readonly PublicKeyCredentialLoader $credentialLoader,
+        private readonly AuthenticatorAttestationResponseValidator $attestationValidator,
+        private readonly AuthenticatorAssertionResponseValidator $assertionValidator,
         private readonly string $domain,
-        #[Autowire(env: 'WEBAUTHN_RP_NAME')]
         private readonly string $rpName,
     ) {}
 
@@ -26,30 +38,40 @@ class PasskeyAuthService
      */
     public function getRegistrationOptions(User $user): array
     {
-        $options = [
-            'rp' => ['name' => $this->rpName, 'id' => $this->domain],
-            'user' => [
-                'id' => base64_encode($user->getEmail()),
-                'name' => $user->getEmail(),
-                'displayName' => $user->getEmail(),
-            ],
-            'challenge' => base64_encode(random_bytes(32)),
-            'pubKeyCredParams' => [
-                ['type' => 'public-key', 'alg' => -7],
-                ['type' => 'public-key', 'alg' => -257],
-            ],
-            'timeout' => 60000,
-            'attestation' => 'none',
-            'authenticatorSelection' => [
-                'userVerification' => 'preferred',
-                'residentKey' => 'preferred',
-            ],
-            'excludeCredentials' => $this->getExcludedCredentials($user),
+        $userEntity = new PublicKeyCredentialUserEntity(
+            $user->getEmail(),
+            $user->getId()->toBinary(),
+            $user->getEmail()
+        );
+
+        $rpEntity = new PublicKeyCredentialRpEntity($this->rpName, $this->domain);
+
+        $challenge = random_bytes(32);
+
+        $pubKeyCredParams = [
+            PublicKeyCredentialParameters::create('public-key', -7),
+            PublicKeyCredentialParameters::create('public-key', -257),
         ];
 
-        $this->session->set('webauthn_registration', $options);
+        $authenticatorSelection = AuthenticatorSelectionCriteria::create(
+            userVerification: AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_PREFERRED,
+            residentKey: AuthenticatorSelectionCriteria::RESIDENT_KEY_REQUIREMENT_PREFERRED,
+        );
 
-        return $options;
+        $options = PublicKeyCredentialCreationOptions::create(
+            rp: $rpEntity,
+            user: $userEntity,
+            challenge: $challenge,
+            pubKeyCredParams: $pubKeyCredParams,
+            authenticatorSelection: $authenticatorSelection,
+            attestation: PublicKeyCredentialCreationOptions::ATTESTATION_CONVEYANCE_PREFERENCE_NONE,
+            excludeCredentials: $this->getExcludedCredentials($user),
+            timeout: 60000,
+        );
+
+        $this->requestStack->getSession()->set('webauthn_registration', $options);
+
+        return $options->jsonSerialize();
     }
 
     /**
@@ -57,27 +79,34 @@ class PasskeyAuthService
      */
     public function verifyRegistration(string $response, User $user): void
     {
-        $options = $this->session->get('webauthn_registration');
+        $options = $this->requestStack->getSession()->get('webauthn_registration');
 
         if (!$options) {
-            throw new \RuntimeException('No registration session found. Please restart registration.');
+            throw new \RuntimeException('No registration session found.');
         }
 
-        $data = json_decode($response, true);
+        $userEntity = new PublicKeyCredentialUserEntity(
+            $user->getEmail(),
+            $user->getId()->toBinary(),
+            $user->getEmail()
+        );
 
-        if (!isset($data['id'])) {
-            throw new \RuntimeException('Invalid credential response: missing id.');
+        $publicKeyCredential = $this->credentialLoader->load($response);
+        $authenticatorResponse = $publicKeyCredential->response;
+
+        if (!$authenticatorResponse instanceof AuthenticatorAttestationResponse) {
+            throw new \RuntimeException('Invalid response type.');
         }
 
-        $credential = new WebauthnCredential();
-        $credential->setUser($user);
-        $credential->setName($data['id']);
-        $credential->setCredentialData($response);
+        $credentialSource = $this->attestationValidator->check(
+            $authenticatorResponse,
+            $options,
+            $this->domain,
+        );
 
-        $this->em->persist($credential);
-        $this->em->flush();
-
-        $this->session->remove('webauthn_registration');
+        // Sauvegarde en base via le repository
+        $this->credRepo->saveCredential($user, $credentialSource);
+        $this->requestStack->getSession()->remove('webauthn_registration');
     }
 
     /**
@@ -85,16 +114,18 @@ class PasskeyAuthService
      */
     public function getLoginOptions(): array
     {
-        $options = [
-            'challenge' => base64_encode(random_bytes(32)),
-            'timeout' => 60000,
-            'rpId' => $this->domain,
-            'userVerification' => 'preferred',
-        ];
+        $challenge = random_bytes(32);
 
-        $this->session->set('webauthn_login', $options);
+        $options = PublicKeyCredentialRequestOptions::create(
+            challenge: $challenge,
+            rpId: $this->domain,
+            userVerification: PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_PREFERRED,
+            timeout: 60000,
+        );
 
-        return $options;
+        $this->requestStack->getSession()->set('webauthn_login', $options);
+
+        return $options->jsonSerialize();
     }
 
     /**
@@ -102,42 +133,56 @@ class PasskeyAuthService
      */
     public function verifyLogin(string $response): User
     {
-        $options = $this->session->get('webauthn_login');
+        $options = $this->requestStack->getSession()->get('webauthn_login');
 
         if (!$options) {
-            throw new \RuntimeException('No login session found. Please restart login.');
+            throw new \RuntimeException('No login session found.');
         }
 
-        $data = json_decode($response, true);
+        $publicKeyCredential = $this->credentialLoader->load($response);
+        $authenticatorResponse = $publicKeyCredential->response;
+
+        if (!$authenticatorResponse instanceof AuthenticatorAssertionResponse) {
+            throw new \RuntimeException('Invalid response type.');
+        }
 
         // Le serveur trouve automatiquement l'utilisateur via le credential ID
-        $credentialId = $data['id'] ?? null;
-
-        if (!$credentialId) {
-            throw new \RuntimeException('Invalid assertion response: missing id.');
-        }
-
-        $entity = $this->credRepo->findByCredentialId($credentialId);
+        $entity = $this->credRepo->findByCredentialId(
+            $publicKeyCredential->rawId
+        );
 
         if (!$entity) {
             throw new \RuntimeException('Credential not found.');
         }
 
-        $entity->setLastUsedAt(new \DateTimeImmutable()); // Mise à jour lastUsedAt
+        $credentialSource = $entity->getCredentialSource();
+
+        $this->assertionValidator->check(
+            $credentialSource,
+            $authenticatorResponse,
+            $options,
+            $this->domain,
+            $credentialSource->userHandle,
+        );
+
+        // Mise à jour lastUsedAt
+        $entity->setLastUsedAt(new \DateTimeImmutable());
         $this->em->flush();
 
-        $this->session->remove('webauthn_login');
+        $this->requestStack->getSession()->remove('webauthn_login');
 
         return $entity->getUser();
     }
 
     private function getExcludedCredentials(User $user): array
     {
-        // Retourne la liste des credential IDs déjà enregistrés
-        // pour éviter les doublons
+        $sources = $this->credRepo->getCredentialSourcesForUser($user);
         return array_map(
-            fn($c) => ['id' => $c->getName(), 'type' => 'public-key'],
-            $this->credRepo->findByUser($user)
+            fn(PublicKeyCredentialSource $source) => PublicKeyCredentialDescriptor::create(
+                PublicKeyCredentialDescriptor::CREDENTIAL_TYPE_PUBLIC_KEY,
+                $source->publicKeyCredentialId,
+            ),
+            $sources
         );
     }
 }

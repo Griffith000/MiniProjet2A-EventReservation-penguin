@@ -20,8 +20,8 @@ class EventController extends AbstractController
         ]);
     }
 
-    #[Route('/events/{id}', name: 'app_event_detail', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function detail(int $id, EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
+    #[Route('/events/{id}', name: 'app_event_detail', methods: ['GET'])]
+    public function detail(string $id, EventRepository $eventRepo, ReservationRepository $reservationRepo): Response
     {
         $event = $eventRepo->find($id);
 

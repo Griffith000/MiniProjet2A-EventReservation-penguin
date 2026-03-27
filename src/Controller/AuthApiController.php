@@ -5,9 +5,11 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\PasskeyAuthService;
+use Doctrine\ORM\EntityManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +24,7 @@ class AuthApiController extends AbstractController
         private JWTTokenManagerInterface $jwtManager,
         private RefreshTokenGeneratorInterface $refreshGenerator,
         private RefreshTokenManagerInterface $refreshManager,
+        private LoggerInterface $logger,
     ) {}
 
     #[Route('/login', name: 'api_auth_login', methods: ['POST'])]
@@ -40,46 +43,14 @@ class AuthApiController extends AbstractController
             return $this->json(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        $token = $this->jwtManager->create($user);
-        $refreshToken = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
-        $this->refreshManager->save($refreshToken);
-
-        return $this->json([
-            'token' => $token,
-            'refresh_token' => $refreshToken->getRefreshToken(),
-        ]);
-    }
-
-    #[Route('/refresh', methods: ['POST'])]
-    public function refresh(): JsonResponse
-    {
-        // Cette route est gérée automatiquement par GesdinetBundle
-        // via /api/token/refresh - voir configuration security.yaml
-        return $this->json(
-            ['error' => 'Utilisez /api/token/refresh'],
-            Response::HTTP_BAD_REQUEST
-        );
-    }
-
-    #[Route('/me', methods: ['GET'])]
-    public function me(): JsonResponse
-    {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        return $this->json([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'roles' => $user->getRoles(),
-        ]);
+        return $this->generateTokenResponse($user);
     }
 
     #[Route('/register/options', methods: ['POST'])]
     public function registerOptions(
         Request $request,
         UserRepository $userRepo,
+        EntityManagerInterface $em,
         PasskeyAuthService $passkeyService,
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
@@ -89,13 +60,16 @@ class AuthApiController extends AbstractController
             return $this->json(['error' => 'Email requis'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Créer ou récupérer l'utilisateur
-        $user = $userRepo->findOneBy(['email' => $email])
-            ?? (new User())->setEmail($email);
+        $user = $userRepo->findOneBy(['email' => $email]);
+        if (!$user) {
+            $user = new User();
+            $user->setEmail($email);
+            $em->persist($user);
+            $em->flush();
+        }
 
         try {
             $options = $passkeyService->getRegistrationOptions($user);
-
             return $this->json($options);
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
@@ -121,21 +95,13 @@ class AuthApiController extends AbstractController
         try {
             $passkeyService->verifyRegistration(json_encode($credential), $user);
 
-            // Générer les tokens JWT
-            $jwt = $this->jwtManager->create($user);
-            $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
-            $this->refreshManager->save($refresh);
-
-            return $this->json([
-                'success' => true,
-                'token' => $jwt,
-                'refresh_token' => $refresh->getRefreshToken(),
-                'user' => [
-                    'id' => $user->getId(),
-                    'email' => $user->getEmail(),
-                ],
-            ]);
+            return $this->generateTokenResponse($user);
         } catch (\Exception $e) {
+            $this->logger->error('Passkey registration failed', [
+                'error' => $e->getMessage(),
+                'cause' => $e->getPrevious()?->getMessage(),
+                'cause2' => $e->getPrevious()?->getPrevious()?->getMessage(),
+            ]);
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
@@ -165,21 +131,50 @@ class AuthApiController extends AbstractController
         try {
             $user = $passkeyService->verifyLogin(json_encode($credential));
 
-            $jwt = $this->jwtManager->create($user);
-            $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
-            $this->refreshManager->save($refresh);
-
-            return $this->json([
-                'success' => true,
-                'token' => $jwt,
-                'refresh_token' => $refresh->getRefreshToken(),
-                'user' => [
-                    'id' => $user->getId(),
-                    'email' => $user->getEmail(),
-                ],
-            ]);
+            return $this->generateTokenResponse($user);
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
+    }
+
+    #[Route('/refresh', methods: ['POST'])]
+    public function refresh(): JsonResponse
+    {
+        return $this->json(
+            ['error' => 'Utilisez /api/token/refresh'],
+            Response::HTTP_BAD_REQUEST
+        );
+    }
+
+    #[Route('/me', methods: ['GET'])]
+    public function me(): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        return $this->json([
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'roles' => $user->getRoles(),
+        ]);
+    }
+
+    private function generateTokenResponse(User $user): JsonResponse
+    {
+        $jwt = $this->jwtManager->create($user);
+        $refresh = $this->refreshGenerator->createForUserWithTtl($user, 2592000);
+        $this->refreshManager->save($refresh);
+
+        return $this->json([
+            'success' => true,
+            'token' => $jwt,
+            'refresh_token' => $refresh->getRefreshToken(),
+            'user' => [
+                'id' => $user->getId(),
+                'email' => $user->getEmail(),
+            ],
+        ]);
     }
 }
