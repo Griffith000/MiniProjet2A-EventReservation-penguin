@@ -49,33 +49,33 @@
                         Event<span class="text-accent">Hub</span>
                     </a>
                     
-                    <button id="mobile-menu-btn" class="md:hidden p-2 text-primary" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                    <button id="mobile-menu-btn" type="button" class="md:hidden p-2 text-primary" aria-label="Menu" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
 
-                    <div id="mobile-menu" class="hidden md:flex flex-col md:flex-row absolute md:relative top-16 md:top-0 left-0 md:left-auto right-0 bg-white md:bg-transparent border-t md:border-t-0 border-gray-200 md:border-none p-4 md:p-0 shadow-lg md:shadow-none gap-4 md:gap-6 items-start md:items-center w-full md:w-auto">
-                        <a href="{{ path('app_event_list') }}" class="text-primary hover:text-accent text-sm font-medium no-underline transition-colors">
+                    <div id="mobile-menu" class="hidden md:flex flex-col md:flex-row absolute md:relative top-full md:top-0 right-0 md:left-auto bg-white md:bg-transparent border-t md:border-t-0 border-gray-200 md:border-none py-4 px-6 md:p-0 shadow-xl md:shadow-none gap-3 md:gap-6 items-end md:items-center w-auto md:w-auto z-50">
+                        <a href="{{ path('app_event_list') }}" class="text-primary hover:text-accent text-base font-medium no-underline transition-colors">
                             Événements
                         </a>
                         {% if app.user %}
                             {% if 'ROLE_ADMIN' in app.user.roles %}
-                                <a href="{{ path('app_admin_dashboard') }}" class="text-accent-dark text-sm font-medium hover:text-accent no-underline transition-colors">
+                                <a href="{{ path('app_admin_dashboard') }}" class="text-accent-dark text-base font-medium hover:text-accent no-underline transition-colors">
                                     Admin
                                 </a>
                             {% endif %}
-                            <span id="nav-user" class="text-primary text-sm font-medium hidden"></span>
-                            <a id="nav-logout" href="{{ path('app_logout') }}" class="text-primary hover:text-accent text-sm font-medium no-underline transition-colors" onclick="localStorage.removeItem('jwt_token');localStorage.removeItem('refresh_token');">
+                            <span id="nav-user" class="text-primary text-base font-medium hidden"></span>
+                            <a id="nav-logout" href="{{ path('app_logout') }}" class="text-primary hover:text-accent text-base font-medium no-underline transition-colors" onclick="localStorage.removeItem('jwt_token');localStorage.removeItem('refresh_token');">
                                 Déconnexion
                             </a>
                         {% else %}
-                            <span id="nav-user" class="text-primary text-sm font-medium hidden"></span>
-                            <a id="nav-logout" href="{{ path('app_logout') }}" class="text-primary hover:text-accent text-sm font-medium hidden no-underline" onclick="localStorage.removeItem('jwt_token');localStorage.removeItem('refresh_token');">
+                            <span id="nav-user" class="text-primary text-base font-medium hidden"></span>
+                            <a id="nav-logout" href="{{ path('app_logout') }}" class="text-primary hover:text-accent text-base font-medium hidden no-underline" onclick="localStorage.removeItem('jwt_token');localStorage.removeItem('refresh_token');">
                                 Déconnexion
                             </a>
-                            <a id="nav-login" href="{{ path('app_login') }}" class="text-primary hover:text-accent text-sm font-medium no-underline transition-colors">
+                            <a id="nav-login" href="{{ path('app_login') }}" class="text-primary hover:text-accent text-base font-medium no-underline transition-colors">
                                 Connexion
                             </a>
-                            <a id="nav-register" href="{{ path('app_register') }}" class="bg-primary text-white px-4 py-2 text-sm font-medium no-underline hover:bg-primary-light transition-colors">
+                            <a id="nav-register" href="{{ path('app_register') }}" class="bg-primary text-white px-5 py-2.5 text-base font-medium no-underline hover:bg-primary-light transition-colors w-full md:w-auto text-center rounded-lg">
                                 S'inscrire
                             </a>
                         {% endif %}
