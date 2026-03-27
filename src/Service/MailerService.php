@@ -4,11 +4,12 @@ namespace App\Service;
 
 use App\Entity\Event;
 use App\Entity\Reservation;
+use Resend\Client;
 use Resend\Resend;
 
 class MailerService
 {
-    private ?Resend $resend = null;
+    private ?Client $client = null;
     private string $apiKey;
 
     public function __construct(string $resendApiKey)
@@ -16,13 +17,13 @@ class MailerService
         $this->apiKey = $resendApiKey;
     }
 
-    private function getClient(): Resend
+    private function getClient(): Client
     {
-        if ($this->resend === null) {
-            $this->resend = new Resend($this->apiKey);
+        if ($this->client === null) {
+            $this->client = Resend::client($this->apiKey);
         }
 
-        return $this->resend;
+        return $this->client;
     }
 
     public function sendReservationConfirmation(Reservation $reservation): void
