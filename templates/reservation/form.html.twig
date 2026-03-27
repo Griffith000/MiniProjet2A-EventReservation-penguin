@@ -62,29 +62,6 @@
 
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('reservation_' ~ event.id) }}">
 
-            <script>
-                (function () {
-                    const token = localStorage.getItem('jwt_token');
-                    if (!token) {
-                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                        return;
-                    }
-                    try {
-                        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-                        if (payload.exp && payload.exp < Date.now() / 1000) {
-                            localStorage.removeItem('jwt_token');
-                            localStorage.removeItem('refresh_token');
-                            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                            return;
-                        }
-                        const email = payload.username || payload.email || payload.sub || '';
-                        if (email) document.getElementById('email').value = email;
-                    } catch (e) {
-                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                    }
-                })();
-            </script>
-
             <button type="submit"
                     class="w-full bg-primary text-white py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all">
                 Confirmer la réservation
