@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\Role;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -21,8 +22,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true)]
     private string $email;
 
-    #[ORM\Column]
-    private array $roles = [];
+    #[ORM\Column(type: 'string', enumType: Role::class)]
+    private Role $role = Role::USER;
 
     #[ORM\Column(nullable: true)]
     private ?string $passwordHash = null;
@@ -62,17 +63,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->email;
     }
 
-    public function getRoles(): array
+    public function getRole(): Role
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-        return array_unique($roles);
+        return $this->role;
     }
 
-    public function setRoles(array $roles): static
+    public function setRole(Role $role): static
     {
-        $this->roles = $roles;
+        $this->role = $role;
         return $this;
+    }
+
+    public function getRoles(): array
+    {
+        return [$this->role->value];
     }
 
     public function getPassword(): ?string
