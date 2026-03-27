@@ -5,7 +5,6 @@ namespace App\Service;
 use App\Entity\Event;
 use App\Entity\Reservation;
 use Resend\Client;
-use Resend\Resend;
 
 class MailerService
 {
@@ -20,7 +19,7 @@ class MailerService
     private function getClient(): Client
     {
         if ($this->client === null) {
-            $this->client = Resend::client($this->apiKey);
+            $this->client = \Resend::client($this->apiKey);
         }
 
         return $this->client;
