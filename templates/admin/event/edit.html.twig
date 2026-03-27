@@ -1,0 +1,85 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Modifier — {{ event.title }}{% endblock %}
+
+{% block body %}
+    <a href="{{ path('app_admin_dashboard') }}"
+       class="inline-flex items-center gap-2 text-gray-500 hover:text-accent text-sm font-medium uppercase tracking-[0.08em] no-underline mb-6 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Tableau de bord
+    </a>
+
+    <div class="max-w-2xl">
+        <div class="mb-8">
+            <span class="text-accent font-semibold text-xs uppercase tracking-[0.2em]">Administration</span>
+            <h1 class="font-display text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">Modifier l'événement</h1>
+            <p class="text-gray-400 mt-1 text-sm">{{ event.title }}</p>
+        </div>
+
+        <form method="post" action="{{ path('app_admin_event_edit', {id: event.id}) }}" class="bg-warm-card border-2 border-gray-900 p-8">
+            <div class="mb-5">
+                <label for="title" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">Titre</label>
+                <input type="text" id="title" name="title"
+                       value="{{ event.title }}"
+                       required
+                       class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+            </div>
+
+            <div class="mb-5">
+                <label for="description" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">Description</label>
+                <textarea id="description" name="description"
+                          rows="4"
+                          required
+                          class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors resize-none">{{ event.description }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                <div>
+                    <label for="date" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">Date et heure</label>
+                    <input type="datetime-local" id="date" name="date"
+                           value="{{ event.date|date('Y-m-d\\TH:i') }}"
+                           required
+                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                </div>
+                <div>
+                    <label for="seats" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">Nombre de places</label>
+                    <input type="number" id="seats" name="seats"
+                           value="{{ event.seats }}"
+                           min="1"
+                           required
+                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <label for="location" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">Lieu</label>
+                <input type="text" id="location" name="location"
+                       value="{{ event.location }}"
+                       required
+                       class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+            </div>
+
+            <div class="mb-8">
+                <label for="image" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">URL de l'image</label>
+                <input type="url" id="image" name="image"
+                       value="{{ event.image }}"
+                       placeholder="https://..."
+                       class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                <p class="text-gray-400 text-xs mt-1.5">Laissez vide pour utiliser l'image par défaut</p>
+            </div>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('edit_event_' ~ event.id) }}">
+
+            <div class="flex items-center gap-4 pt-2">
+                <button type="submit"
+                        class="bg-gray-900 text-white px-8 py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all">
+                    Enregistrer les modifications
+                </button>
+                <a href="{{ path('app_admin_dashboard') }}"
+                   class="text-gray-400 hover:text-gray-900 text-sm font-medium no-underline transition-colors">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

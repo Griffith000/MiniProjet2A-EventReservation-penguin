@@ -1,0 +1,72 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Réservations — {{ event.title }}{% endblock %}
+
+{% block body %}
+    <a href="{{ path('app_admin_dashboard') }}"
+       class="inline-flex items-center gap-2 text-gray-500 hover:text-accent text-sm font-medium uppercase tracking-[0.08em] no-underline mb-6 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Tableau de bord
+    </a>
+
+    <div class="mb-8 pb-6 border-b-2 border-gray-900">
+        <span class="text-accent font-semibold text-xs uppercase tracking-[0.2em]">Réservations</span>
+        <h1 class="font-display text-4xl font-extrabold text-gray-900 mt-2 tracking-tight leading-tight">
+            {{ event.title }}
+        </h1>
+        <div class="flex flex-wrap gap-4 mt-3 text-gray-400 text-sm">
+            <span class="flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {{ event.date|date('d/m/Y à H:i') }}
+            </span>
+            <span class="flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ event.location }}
+            </span>
+            <span class="flex items-center gap-1.5 text-accent font-semibold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                {{ reservations|length }} réservation{{ reservations|length != 1 ? 's' : '' }}
+            </span>
+        </div>
+    </div>
+
+    {% if reservations|length > 0 %}
+        <div class="border-2 border-gray-900 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-900 text-white">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em]">#</th>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em]">Nom</th>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em] hidden md:table-cell">E-mail</th>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em] hidden lg:table-cell">Téléphone</th>
+                        <th class="px-5 py-3 text-left text-[0.65rem] font-bold uppercase tracking-[0.12em] hidden md:table-cell">Date de réservation</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for reservation in reservations %}
+                        <tr class="bg-warm-card hover:bg-warm transition-colors">
+                            <td class="px-5 py-4 text-gray-400 font-mono text-xs">{{ loop.index }}</td>
+                            <td class="px-5 py-4 font-semibold text-gray-900">{{ reservation.name }}</td>
+                            <td class="px-5 py-4 text-gray-500 hidden md:table-cell">{{ reservation.email }}</td>
+                            <td class="px-5 py-4 text-gray-500 hidden lg:table-cell">{{ reservation.phone }}</td>
+                            <td class="px-5 py-4 text-gray-400 text-xs hidden md:table-cell">
+                                {{ reservation.createdAt|date('d/m/Y H:i') }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <p class="text-gray-400 text-xs mt-3">
+            {{ reservations|length }} / {{ event.seats }} places occupées
+            ({{ ((reservations|length / event.seats) * 100)|round }}%)
+        </p>
+    {% else %}
+        <div class="text-center py-16 border-2 border-dashed border-gray-300">
+            <div class="text-5xl mb-4 opacity-40">📭</div>
+            <h3 class="font-display text-2xl font-bold text-gray-900 mb-2">Aucune réservation</h3>
+            <p class="text-gray-400">Personne n'a encore réservé pour cet événement.</p>
+        </div>
+    {% endif %}
+{% endblock %}

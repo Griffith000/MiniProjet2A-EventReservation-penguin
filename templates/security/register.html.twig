@@ -7,27 +7,77 @@
         <div class="mb-8">
             <span class="text-accent font-semibold text-xs uppercase tracking-[0.2em]">Nouveau compte</span>
             <h1 class="font-display text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">S'inscrire</h1>
-            <p class="text-gray-400 mt-2 text-sm">Créez votre compte avec une Passkey — sans mot de passe</p>
         </div>
 
-        <div class="bg-warm-card border-2 border-gray-900 p-8">
-            <div class="mb-5">
-                <label for="email" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+        <div class="bg-warm-card border-2 border-gray-900 p-2 mb-6">
+            <div class="flex">
+                <button type="button" id="toggle-password" class="toggle-btn active flex-1 py-3 font-bold text-sm uppercase tracking-[0.1em] transition-all">
                     Email
-                </label>
-                <input type="email" id="email" name="email"
-                       autocomplete="email"
-                       placeholder="vous@exemple.com"
-                       required
-                       class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                </button>
+                <button type="button" id="toggle-passkey" class="toggle-btn flex-1 py-3 font-bold text-sm uppercase tracking-[0.1em] text-gray-400 transition-all">
+                    Passkey
+                </button>
             </div>
+        </div>
 
-            <button id="register-passkey-btn"
-                    class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all flex items-center justify-center gap-2">
-                <span>🔑</span> Créer ma Passkey
-            </button>
+        {# Password registration form #}
+        <div id="form-password" class="registration-form">
+            <form method="post" action="{{ path('app_register') }}" class="bg-warm-card border-2 border-gray-900 p-8">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
+                
+                <div class="mb-5">
+                    <label for="email" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+                        Email
+                    </label>
+                    <input type="email" id="email" name="email"
+                           autocomplete="email"
+                           placeholder="vous@exemple.com"
+                           required
+                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                </div>
 
-            <p id="register-msg" class="mt-4 text-sm text-center font-medium hidden"></p>
+                <div class="mb-5">
+                    <label for="password" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+                        Mot de passe
+                    </label>
+                    <input type="password" id="password" name="password"
+                           autocomplete="new-password"
+                           placeholder="••••••••"
+                           required
+                           minlength="6"
+                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all">
+                    Créer mon compte
+                </button>
+            </form>
+        </div>
+
+        {# Passkey registration form #}
+        <div id="form-passkey" class="registration-form hidden">
+            <form method="post" class="bg-warm-card border-2 border-gray-900 p-8">
+                <p class="text-gray-400 mb-4 text-sm">Créez votre compte avec une Passkey — sans mot de passe</p>
+                
+                <div class="mb-5">
+                    <label for="passkey-email" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+                        Email
+                    </label>
+                    <input type="email" id="passkey-email" name="passkey_email"
+                           autocomplete="email"
+                           placeholder="vous@exemple.com"
+                           required
+                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                </div>
+
+                <button type="button" id="register-passkey-btn"
+                        class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all flex items-center justify-center gap-2">
+                    <span>🔑</span> Créer ma Passkey
+                </button>
+
+                <p id="register-msg" class="mt-4 text-sm text-center font-medium hidden"></p>
+            </form>
         </div>
 
         <p class="mt-6 text-center text-sm text-gray-500">
@@ -42,8 +92,31 @@
     <script type="module">
         import { registerPasskey } from '/js/auth.js';
 
+        const togglePassword = document.getElementById('toggle-password');
+        const togglePasskey = document.getElementById('toggle-passkey');
+        const formPassword = document.getElementById('form-password');
+        const formPasskey = document.getElementById('form-passkey');
+
+        togglePassword.addEventListener('click', () => {
+            togglePassword.classList.add('active', 'text-gray-900');
+            togglePassword.classList.remove('text-gray-400');
+            togglePasskey.classList.remove('active', 'text-gray-900');
+            togglePasskey.classList.add('text-gray-400');
+            formPassword.classList.remove('hidden');
+            formPasskey.classList.add('hidden');
+        });
+
+        togglePasskey.addEventListener('click', () => {
+            togglePasskey.classList.add('active', 'text-gray-900');
+            togglePasskey.classList.remove('text-gray-400');
+            togglePassword.classList.remove('active', 'text-gray-900');
+            togglePassword.classList.add('text-gray-400');
+            formPasskey.classList.remove('hidden');
+            formPassword.classList.add('hidden');
+        });
+
         document.getElementById('register-passkey-btn').addEventListener('click', async () => {
-            const email = document.getElementById('email').value.trim();
+            const email = document.getElementById('passkey-email').value.trim();
             const msg = document.getElementById('register-msg');
 
             if (!email) {
@@ -68,4 +141,14 @@
             }
         });
     </script>
+    <style>
+        .toggle-btn {
+            background: #e5e5e5;
+            color: #666;
+        }
+        .toggle-btn.active {
+            background: #c1440e;
+            color: #fff;
+        }
+    </style>
 {% endblock %}
