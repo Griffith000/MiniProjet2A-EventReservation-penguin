@@ -3,41 +3,39 @@
 {% block title %}S'inscrire{% endblock %}
 
 {% block body %}
-    <div class="max-w-md mx-auto mt-8">
-        <div class="mb-8">
-            <span class="text-accent font-semibold text-xs uppercase tracking-[0.2em]">Nouveau compte</span>
-            <h1 class="font-display text-4xl font-extrabold text-gray-900 mt-2 tracking-tight">S'inscrire</h1>
+    <div class="max-w-md mx-auto">
+        <div class="text-center mb-8">
+            <span class="text-accent font-semibold text-xs uppercase tracking-[0.25em]">Nouveau compte</span>
+            <h1 class="font-display text-3xl sm:text-4xl font-bold text-primary mt-2 tracking-tight">S'inscrire</h1>
         </div>
 
-        <div class="bg-warm-card border-2 border-gray-900 p-2 mb-6">
-            <div class="flex">
-                <button type="button" id="toggle-password" class="toggle-btn active flex-1 py-3 font-bold text-sm uppercase tracking-[0.1em] transition-all">
-                    Email
-                </button>
-                <button type="button" id="toggle-passkey" class="toggle-btn flex-1 py-3 font-bold text-sm uppercase tracking-[0.1em] text-gray-400 transition-all">
-                    Passkey
-                </button>
-            </div>
+        <div class="bg-card border border-gray-200 p-1 mb-6 rounded-lg flex">
+            <button type="button" id="toggle-password" class="toggle-btn active flex-1 py-3 font-medium text-sm rounded-md transition-all">
+                Email
+            </button>
+            <button type="button" id="toggle-passkey" class="toggle-btn flex-1 py-3 font-medium text-sm text-gray-400 rounded-md transition-all">
+                Passkey
+            </button>
         </div>
 
         {# Password registration form #}
         <div id="form-password" class="registration-form">
-            <form method="post" action="{{ path('app_register') }}" class="bg-warm-card border-2 border-gray-900 p-8">
+            <form method="post" action="{{ path('app_register') }}" class="bg-card border border-gray-100 shadow-lg p-8 rounded-xl">
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
                 
                 <div class="mb-5">
-                    <label for="email" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+                    <label for="email" class="block text-primary text-sm font-medium mb-2">
                         Email
                     </label>
                     <input type="email" id="email" name="email"
                            autocomplete="email"
                            placeholder="vous@exemple.com"
                            required
-                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                           class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
                 </div>
 
                 <div class="mb-5">
-                    <label for="password" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+                    <label for="password" class="block text-primary text-sm font-medium mb-2">
                         Mot de passe
                     </label>
                     <input type="password" id="password" name="password"
@@ -45,11 +43,11 @@
                            placeholder="••••••••"
                            required
                            minlength="6"
-                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                           class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
                 </div>
 
                 <button type="submit"
-                        class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all">
+                        class="w-full bg-primary text-white py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all">
                     Créer mon compte
                 </button>
             </form>
@@ -57,32 +55,33 @@
 
         {# Passkey registration form #}
         <div id="form-passkey" class="registration-form hidden">
-            <form method="post" class="bg-warm-card border-2 border-gray-900 p-8">
-                <p class="text-gray-400 mb-4 text-sm">Créez votre compte avec une Passkey — sans mot de passe</p>
+            <form method="post" class="bg-card border border-gray-100 shadow-lg p-8 rounded-xl">
+                <p class="text-gray-500 mb-5 text-sm">Créez votre compte avec une Passkey — plus besoin de mot de passe</p>
                 
                 <div class="mb-5">
-                    <label for="passkey-email" class="block text-gray-900 text-xs font-bold uppercase tracking-[0.12em] mb-2">
+                    <label for="passkey-email" class="block text-primary text-sm font-medium mb-2">
                         Email
                     </label>
                     <input type="email" id="passkey-email" name="passkey_email"
                            autocomplete="email"
                            placeholder="vous@exemple.com"
                            required
-                           class="w-full border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 text-sm font-medium focus:outline-none focus:border-gray-900 transition-colors">
+                           class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
                 </div>
 
                 <button type="button" id="register-passkey-btn"
-                        class="w-full bg-gray-900 text-white py-3.5 font-bold text-sm uppercase tracking-[0.1em] hover:bg-accent hover:-translate-y-0.5 hover:shadow-[4px_6px_0_rgba(0,0,0,0.2)] active:translate-y-0 active:shadow-none transition-all flex items-center justify-center gap-2">
-                    <span>🔑</span> Créer ma Passkey
+                        class="w-full bg-primary text-white py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                    Créer ma Passkey
                 </button>
 
                 <p id="register-msg" class="mt-4 text-sm text-center font-medium hidden"></p>
             </form>
         </div>
 
-        <p class="mt-6 text-center text-sm text-gray-500">
+        <p class="mt-8 text-center text-sm text-gray-500">
             Déjà un compte ?
-            <a href="{{ path('app_login') }}" class="text-accent font-semibold hover:underline">Se connecter</a>
+            <a href="{{ path('app_login') }}" class="text-accent-dark font-medium hover:underline">Se connecter</a>
         </p>
     </div>
 {% endblock %}
@@ -98,18 +97,18 @@
         const formPasskey = document.getElementById('form-passkey');
 
         togglePassword.addEventListener('click', () => {
-            togglePassword.classList.add('active', 'text-gray-900');
+            togglePassword.classList.add('active', 'text-white');
             togglePassword.classList.remove('text-gray-400');
-            togglePasskey.classList.remove('active', 'text-gray-900');
+            togglePasskey.classList.remove('active', 'text-white');
             togglePasskey.classList.add('text-gray-400');
             formPassword.classList.remove('hidden');
             formPasskey.classList.add('hidden');
         });
 
         togglePasskey.addEventListener('click', () => {
-            togglePasskey.classList.add('active', 'text-gray-900');
+            togglePasskey.classList.add('active', 'text-white');
             togglePasskey.classList.remove('text-gray-400');
-            togglePassword.classList.remove('active', 'text-gray-900');
+            togglePassword.classList.remove('active', 'text-white');
             togglePassword.classList.add('text-gray-400');
             formPasskey.classList.remove('hidden');
             formPassword.classList.add('hidden');
@@ -121,33 +120,33 @@
 
             if (!email) {
                 msg.textContent = 'Veuillez saisir votre email.';
-                msg.className = 'mt-4 text-sm text-center font-medium text-red-700';
+                msg.className = 'mt-4 text-sm text-center font-medium text-red-600';
                 msg.classList.remove('hidden');
                 return;
             }
 
             msg.textContent = 'Création de la passkey…';
-            msg.className = 'mt-4 text-sm text-center font-medium text-gray-700';
+            msg.className = 'mt-4 text-sm text-center font-medium text-gray-600';
             msg.classList.remove('hidden');
 
             try {
                 await registerPasskey(email, email);
                 msg.textContent = 'Passkey créée ! Redirection…';
-                msg.className = 'mt-4 text-sm text-center font-medium text-green-700';
+                msg.className = 'mt-4 text-sm text-center font-medium text-green-600';
                 window.location.href = '/events';
             } catch (e) {
                 msg.textContent = e.message;
-                msg.className = 'mt-4 text-sm text-center font-medium text-red-700';
+                msg.className = 'mt-4 text-sm text-center font-medium text-red-600';
             }
         });
     </script>
     <style>
         .toggle-btn {
-            background: #e5e5e5;
+            background: #f3f4f6;
             color: #666;
         }
         .toggle-btn.active {
-            background: #c1440e;
+            background: #d4a574;
             color: #fff;
         }
     </style>
