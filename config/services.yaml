@@ -46,3 +46,7 @@ services:
         arguments:
             $domain: '%env(APP_DOMAIN)%'
             $rpName: '%env(WEBAUTHN_RP_NAME)%'
+
+    App\Service\MailerService:
+        arguments:
+            $resendApiKey: '%env(RESEND_API_KEY)%'
