@@ -49,4 +49,4 @@ services:
 
     App\Service\MailerService:
         arguments:
-            $resendApiKey: '%env(RESEND_API_KEY)%'
+            $resendApiKey: '%env(resolve:RESEND_API_KEY)%'
