@@ -8,7 +8,7 @@ services:
 
 ###> symfony/mailer ###
   mailer:
-    image: axllent/mailpit
+    image: docker.io/axllent/mailpit
     ports:
       - "1025"
       - "8025"

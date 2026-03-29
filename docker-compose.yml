@@ -11,7 +11,7 @@ services:
       - APP_DEBUG=0
       - JWT_PASSPHRASE=${JWT_PASSPHRASE}
       - APP_DOMAIN=${APP_DOMAIN:-localhost}
-      - DATABASE_URL=postgresql://user:${DB_PASSWORD}@db:5432/app
+      - DATABASE_URL=postgresql://user:${DB_PASSWORD}@db:5432/app?serverVersion=16&charset=utf8
     volumes:
       - ./config/jwt:/var/www/config/jwt:ro
       - ./var:/var/www/var
@@ -21,10 +21,10 @@ services:
       - app_network
 
   nginx:
-    image: nginx:alpine
+    image: docker.io/library/nginx:alpine
     container_name: symfony_nginx
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - ./public:/var/www/public:ro
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
@@ -34,7 +34,7 @@ services:
       - app_network
 
   db:
-    image: postgres:15-alpine
+    image: docker.io/library/postgres:16-alpine
     container_name: symfony_db
     environment:
       - POSTGRES_DB=app
@@ -42,6 +42,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/db/initdb.d:/docker-entrypoint-initdb.d:ro
     networks:
       - app_network
 
