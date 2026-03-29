@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.4-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -18,6 +18,9 @@ RUN useradd -u 1000 -m appuser
 USER appuser
 
 WORKDIR /var/www
+
+ENV APP_ENV=prod \
+    APP_DEBUG=0
 
 COPY --chown=appuser:appuser . .
 
