@@ -1,0 +1,62 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Événements à venir{% endblock %}
+
+{% block body %}
+    <div class="mb-10">
+        <span class="text-accent font-semibold text-xs uppercase tracking-[0.25em]">Découvrir</span>
+        <h1 class="font-display text-4xl sm:text-5xl font-bold text-primary mt-2 tracking-tight">
+            Événements à venir
+        </h1>
+        {% if events|length > 0 %}
+            <p class="text-gray-500 mt-3 text-sm">{{ events|length }} événement{{ events|length > 1 ? 's' : '' }} disponible{{ events|length > 1 ? 's' : '' }}</p>
+        {% endif %}
+    </div>
+
+    {% if events|length > 0 %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {% for event in events %}
+                <article class="group bg-card border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 rounded-xl overflow-hidden">
+                    <div class="relative overflow-hidden">
+                        <img
+                            src="{{ event.image ?? '/images/event-placeholder.jpg' }}"
+                            alt="{{ event.title }}"
+                            class="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                        >
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <span class="absolute top-4 left-4 bg-white/95 backdrop-blur text-primary text-xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full">
+                            {{ event.date|date('d M Y') }}
+                        </span>
+                    </div>
+                    <div class="p-6">
+                        <h2 class="font-display text-xl font-semibold text-primary mb-3 leading-tight line-clamp-2">
+                            {{ event.title }}
+                        </h2>
+                        <div class="flex flex-wrap gap-4 text-gray-500 text-sm mb-5">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {{ event.location }}
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                {{ event.seats }} places
+                            </span>
+                        </div>
+                        <a href="{{ path('app_event_detail', {id: event.id}) }}"
+                           class="inline-flex items-center gap-2 text-accent-dark font-medium text-sm no-underline group-hover:gap-3 transition-all">
+                            Voir les détails
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        </a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-20 bg-gray-50 rounded-2xl">
+            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <h3 class="font-display text-2xl font-semibold text-primary mb-2">Aucun événement disponible</h3>
+            <p class="text-gray-400">Revenez bientôt pour découvrir nos prochains événements.</p>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+    <div class="max-w-md mx-auto">
+        <div class="text-center mb-8">
+            <span class="text-accent font-semibold text-xs uppercase tracking-[0.25em]">Bienvenue</span>
+            <h1 class="font-display text-3xl sm:text-4xl font-bold text-primary mt-2 tracking-tight">Connexion</h1>
+            <p class="text-gray-500 mt-2 text-sm">Connectez-vous pour réserver vos événements</p>
+        </div>
+
+        {% if error %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-100 text-red-700 font-medium text-sm rounded-lg">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('app_login') }}" class="bg-card border border-gray-100 shadow-lg p-8 rounded-xl">
+            <div class="mb-5">
+                <label for="username" class="block text-primary text-sm font-medium mb-2">
+                    Email
+                </label>
+                <input type="email" id="username" name="_username"
+                       value="{{ last_username }}"
+                       autocomplete="email"
+                       placeholder="vous@exemple.com"
+                       required
+                       class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
+            </div>
+
+            <div class="mb-6">
+                <label for="password" class="block text-primary text-sm font-medium mb-2">
+                    Mot de passe
+                </label>
+                <input type="password" id="password" name="_password"
+                       autocomplete="current-password"
+                       placeholder="••••••••"
+                       required
+                       class="w-full border border-gray-200 bg-surface px-4 py-3 text-primary text-sm rounded-lg focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors">
+            </div>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <button type="submit"
+                    class="w-full bg-primary text-white py-3.5 font-medium text-sm rounded-lg hover:bg-accent hover:-translate-y-0.5 hover:shadow-lg transition-all">
+                Se connecter
+            </button>
+        </form>
+
+        <div class="my-6 flex items-center gap-4">
+            <div class="flex-grow h-px bg-gray-200"></div>
+            <span class="text-gray-400 text-xs uppercase tracking-wider">ou</span>
+            <div class="flex-grow h-px bg-gray-200"></div>
+        </div>
+
+        <button id="passkey-login-btn"
+                class="w-full border border-gray-200 bg-white text-primary py-3.5 font-medium text-sm rounded-lg hover:bg-gray-50 hover:border-gray-300 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            Se connecter avec une Passkey
+        </button>
+
+        <p id="passkey-msg" class="mt-4 text-sm text-center font-medium hidden"></p>
+
+        <p class="mt-8 text-center text-sm text-gray-500">
+            Pas encore de compte ?
+            <a href="{{ path('app_register') }}" class="text-accent-dark font-medium hover:underline">S'inscrire</a>
+        </p>
+    </div>
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="module">
+        import { loginWithPasskey } from '/js/auth.js';
+
+        const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/login/redirect';
+
+        document.getElementById('passkey-login-btn').addEventListener('click', async () => {
+            const msg = document.getElementById('passkey-msg');
+            msg.className = 'mt-4 text-sm text-center font-medium';
+            msg.textContent = 'Authentification en cours…';
+            msg.classList.remove('hidden');
+            try {
+                await loginWithPasskey();
+                msg.textContent = 'Connecté ! Redirection…';
+                msg.classList.add('text-green-600');
+                window.location.href = redirectUrl;
+            } catch (e) {
+                msg.textContent = e.message;
+                msg.classList.add('text-red-600');
+            }
+        });
+    </script>
+{% endblock %}
+{% endblock %}
